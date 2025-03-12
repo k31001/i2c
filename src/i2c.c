@@ -1,8 +1,13 @@
 #include "i2c.h"
+#include <assert.h>
 
 /* I2C 클럭 설정 내부 함수 */
 static void I2C_ClockConfig(I2C_TypeDef *I2Cx, I2C_Config *config, uint32_t pclk1)
 {
+    /* 널 포인터 체크 */
+    assert(I2Cx != NULL);
+    assert(config != NULL);
+
     uint32_t ccr_val;
 
     /* I2C 설정 초기화 */
@@ -46,6 +51,10 @@ static void I2C_ClockConfig(I2C_TypeDef *I2Cx, I2C_Config *config, uint32_t pclk
 /* I2C 초기화 함수 */
 void I2C_Init(I2C_TypeDef *I2Cx, I2C_Config *config)
 {
+    /* 널 포인터 체크 */
+    assert(I2Cx != NULL);
+    assert(config != NULL);
+
     uint32_t pclk1 = SYSTEM_CLOCK_DEFAULT; // PCLK1 클럭 주파수
 
     /* I2C 클럭 활성화 */
@@ -84,6 +93,9 @@ void I2C_Init(I2C_TypeDef *I2Cx, I2C_Config *config)
 /* I2C 비활성화 함수 */
 void I2C_DeInit(I2C_TypeDef *I2Cx)
 {
+    /* 널 포인터 체크 */
+    assert(I2Cx != NULL);
+
     I2Cx->CR1.b.PE = 0;
 
     if (I2Cx == I2C1)
@@ -99,6 +111,9 @@ void I2C_DeInit(I2C_TypeDef *I2Cx)
 /* I2C 시작 조건 생성 */
 I2C_Status I2C_Start(I2C_TypeDef *I2Cx)
 {
+    /* 널 포인터 체크 */
+    assert(I2Cx != NULL);
+
     uint32_t timeout = I2C_TIMEOUT_DEFAULT;
 
     /* 시작 조건 생성 */
@@ -119,12 +134,18 @@ I2C_Status I2C_Start(I2C_TypeDef *I2Cx)
 /* I2C 정지 조건 생성 */
 void I2C_Stop(I2C_TypeDef *I2Cx)
 {
+    /* 널 포인터 체크 */
+    assert(I2Cx != NULL);
+
     I2Cx->CR1.b.STOP = 1;
 }
 
 /* 1바이트 데이터 쓰기 */
 I2C_Status I2C_WriteByte(I2C_TypeDef *I2Cx, uint8_t data)
 {
+    /* 널 포인터 체크 */
+    assert(I2Cx != NULL);
+
     uint32_t timeout = I2C_TIMEOUT_DEFAULT;
 
     /* TXE 플래그 대기 */
@@ -155,6 +176,10 @@ I2C_Status I2C_WriteByte(I2C_TypeDef *I2Cx, uint8_t data)
 /* 1바이트 데이터 읽기 */
 I2C_Status I2C_ReadByte(I2C_TypeDef *I2Cx, uint8_t *data, uint8_t ack)
 {
+    /* 널 포인터 체크 */
+    assert(I2Cx != NULL);
+    assert(data != NULL);
+
     uint32_t timeout = I2C_TIMEOUT_DEFAULT;
 
     /* ACK 설정 */
@@ -185,6 +210,12 @@ I2C_Status I2C_ReadByte(I2C_TypeDef *I2Cx, uint8_t *data, uint8_t ack)
 /* 여러 바이트 데이터 쓰기 */
 I2C_Status I2C_WriteData(I2C_TypeDef *I2Cx, uint8_t slaveAddr, uint8_t *data, uint16_t len)
 {
+    /* 널 포인터 체크 */
+    assert(I2Cx != NULL);
+    assert(data != NULL);
+    /* 데이터 길이 체크 */
+    assert(len > 0);
+
     I2C_Status status;
     uint32_t timeout = I2C_TIMEOUT_DEFAULT;
 
@@ -224,6 +255,12 @@ I2C_Status I2C_WriteData(I2C_TypeDef *I2Cx, uint8_t slaveAddr, uint8_t *data, ui
 /* 여러 바이트 데이터 읽기 */
 I2C_Status I2C_ReadData(I2C_TypeDef *I2Cx, uint8_t slaveAddr, uint8_t *data, uint16_t len)
 {
+    /* 널 포인터 체크 */
+    assert(I2Cx != NULL);
+    assert(data != NULL);
+    /* 데이터 길이 체크 */
+    assert(len > 0);
+
     I2C_Status status;
     uint32_t timeout = I2C_TIMEOUT_DEFAULT;
 
