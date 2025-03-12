@@ -114,4 +114,14 @@ I2C_Status I2C_WriteData(I2C_TypeDef *I2Cx, uint8_t slaveAddr, uint8_t *data, ui
  */
 I2C_Status I2C_ReadData(I2C_TypeDef *I2Cx, uint8_t slaveAddr, uint8_t *data, uint16_t len);
 
+/**
+ * @brief  I2C 클럭을 설정합니다. (내부 함수)
+ * @param  I2Cx: 설정할 I2C 주변장치 (I2C1 또는 I2C2)
+ * @param  config: I2C 초기화 설정 구조체 포인터
+ * @param  pclk1: PCLK1 클럭 주파수 (Hz)
+ * @return None
+ * @note   이 함수는 I2C_Init 함수에서 내부적으로 호출됩니다.
+ */
+void I2C_ClockConfig(I2C_TypeDef *I2Cx, I2C_Config *config, uint32_t pclk1);
+
 #endif /* __I2C_H */
