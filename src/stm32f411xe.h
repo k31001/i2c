@@ -23,6 +23,25 @@
 #define AHB1PERIPH_BASE (PERIPH_BASE + 0x00020000UL)
 #define RCC_BASE (AHB1PERIPH_BASE + 0x3800UL)
 
+/* 시스템 클럭 설정 */
+#define SYSTEM_CLOCK_DEFAULT 16000000UL /* 기본 시스템 클럭 (16MHz) */
+
+/* 타임아웃 설정 */
+#define I2C_TIMEOUT_DEFAULT 10000UL /* I2C 기본 타임아웃 값 */
+#define SPI_TIMEOUT_DEFAULT 10000UL /* SPI 기본 타임아웃 값 */
+
+/* I2C 속도 설정 */
+#define I2C_STANDARD_MODE_SPEED 100000UL /* 표준 모드 속도 (100KHz) */
+#define I2C_FAST_MODE_SPEED 400000UL     /* 고속 모드 속도 (400KHz) */
+
+/* I2C 듀티 사이클 설정 */
+#define I2C_DUTYCYCLE_2 0    /* 2:1 듀티 사이클 */
+#define I2C_DUTYCYCLE_16_9 1 /* 16:9 듀티 사이클 */
+
+/* I2C 주소 설정 */
+#define I2C_ADDRESSING_7BIT 0  /* 7비트 주소 모드 */
+#define I2C_ADDRESSING_10BIT 1 /* 10비트 주소 모드 */
+
 /* I2C CR1 레지스터 구조체 */
 typedef union
 {
