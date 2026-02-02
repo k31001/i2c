@@ -1,6 +1,7 @@
 #include "../i2c.h"
 #include "../gpio.h"
 #include <stdio.h>
+#include <string.h>
 
 /**
  * @brief 테스트 결과를 출력하는 헬퍼 함수
@@ -122,6 +123,94 @@ static void Test_I2C_Error_Functions(I2C_TypeDef* I2Cx) {
     }
 }
 
+/**
+ * @brief  1MB(약 1,048,576바이트) 대용량 I2C 송수신 스트레스 테스트
+ *
+ * 전체 1MB 버퍼를 여러 번에 나누어 쓰고 읽으면서 드라이버의 연속 전송 안정성을 검증합니다.
+ * 실제 슬레이브 디바이스의 특성(EEPROM, RAM, 레지스터 맵 등)에 따라 데이터 패턴이 보존되지
+ * 않을 수 있으므로, 기본 동작에서는 상태 코드(I2C_Status)만 검증합니다.
+ *
+ * @note
+ *  - I2C_WriteData / I2C_ReadData의 길이 인자가 uint16_t 이므로, 내부적으로 청크 단위로 쪼개어
+ *    여러 번 호출합니다.
+ *  - 1MB 버퍼는 스택 오버플로우를 피하기 위해 정적(static) 데이터 영역에 할당합니다.
+ * @warning
+ *  - 실제 타깃 보드의 메모리 용량과 슬레이브 디바이스 특성을 반드시 고려해야 합니다.
+ *  - 슬레이브가 1MB 연속 쓰기/읽기를 지원하지 않는 경우, 이 테스트는 실패하거나 예상과 다른
+ *    동작을 할 수 있습니다.
+ */
+static void Test_I2C_1MB_Transfer(I2C_TypeDef* I2Cx) {
+    printf("\n=== 1MB 대용량 송수신 테스트 ===\n");
+
+    enum {
+        I2C_1MB_TOTAL_SIZE = 1024 * 1024,  /* 1MB */
+        I2C_CHUNK_SIZE     = 4096          /* 한 번에 전송할 청크 크기(4KB) */
+    };
+
+    static uint8_t tx_buffer[I2C_1MB_TOTAL_SIZE];
+    static uint8_t rx_buffer[I2C_1MB_TOTAL_SIZE];
+
+    uint8_t slave_addr = 0x50;
+
+    /* 송신 버퍼 패턴 채우기 */
+    for (uint32_t i = 0; i < I2C_1MB_TOTAL_SIZE; ++i) {
+        tx_buffer[i] = (uint8_t)(i & 0xFF);
+    }
+
+    I2C_Status status = I2C_OK;
+    uint32_t offset = 0;
+
+    /* 1MB 전체를 청크 단위로 쓰기 */
+    while (offset < I2C_1MB_TOTAL_SIZE && status == I2C_OK) {
+        uint32_t remaining = I2C_1MB_TOTAL_SIZE - offset;
+        uint16_t chunk_len = (remaining > I2C_CHUNK_SIZE) ? I2C_CHUNK_SIZE : (uint16_t)remaining;
+
+        status = I2C_WriteData(I2Cx, slave_addr, &tx_buffer[offset], chunk_len);
+        if (status != I2C_OK) {
+            printf("1MB 쓰기 중 오류 발생 (offset=%lu, len=%u, status=%d)\n",
+                   (unsigned long)offset, chunk_len, status);
+            break;
+        }
+
+        offset += chunk_len;
+    }
+
+    if (status != I2C_OK) {
+        PrintTestResult("1MB 대용량 쓰기", status);
+        return;
+    }
+
+    /* 읽기 전에 오프셋 초기화 */
+    offset = 0;
+
+    /* 1MB 전체를 청크 단위로 읽기 */
+    while (offset < I2C_1MB_TOTAL_SIZE && status == I2C_OK) {
+        uint32_t remaining = I2C_1MB_TOTAL_SIZE - offset;
+        uint16_t chunk_len = (remaining > I2C_CHUNK_SIZE) ? I2C_CHUNK_SIZE : (uint16_t)remaining;
+
+        status = I2C_ReadData(I2Cx, slave_addr, &rx_buffer[offset], chunk_len);
+        if (status != I2C_OK) {
+            printf("1MB 읽기 중 오류 발생 (offset=%lu, len=%u, status=%d)\n",
+                   (unsigned long)offset, chunk_len, status);
+            break;
+        }
+
+        offset += chunk_len;
+    }
+
+    PrintTestResult("1MB 대용량 송수신", status);
+
+#ifdef VERIFY_I2C_1MB_DATA
+    if (status == I2C_OK) {
+        if (memcmp(tx_buffer, rx_buffer, I2C_1MB_TOTAL_SIZE) == 0) {
+            printf("1MB 데이터 검증: 성공 (TX/RX 일치)\n");
+        } else {
+            printf("1MB 데이터 검증: 실패 (TX/RX 불일치)\n");
+        }
+    }
+#endif
+}
+
 void I2C_Test(void) {
     printf("===== I2C 드라이버 테스트 시작 =====\n");
     
@@ -158,6 +247,7 @@ void I2C_Test(void) {
     Test_I2C_Speed_Functions(I2C1);
     Test_I2C_Data_Functions(I2C1);
     Test_I2C_Error_Functions(I2C1);
+    Test_I2C_1MB_Transfer(I2C1);
     
     // 정리
     I2C_DeInit(I2C1);
